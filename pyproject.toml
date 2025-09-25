@@ -1,0 +1,84 @@
+[project]
+name = "foo"
+version = "0.1.1"
+description = "EDIT"
+authors = [
+    {name = "EDIT", email = "joe@example.com"}
+]
+readme = "README.md"
+license = "MIT"
+keywords = [
+    "EDIT", "EDIT"
+]
+# classifiers = ["Private :: Do Not Upload"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: MIT License",
+    #"Topic :: Text Processing :: Markup :: HTML",
+    #"Topic :: Text Processing :: Markup :: XML",
+    "Programming Language :: Python :: 3.12",
+]
+requires-python = ">=3.12"
+dependencies = [
+    "python-dotenv>=1.1.1"
+]
+
+
+[project.urls]
+GitHub = "https://github.com/EDIT"
+
+[project.scripts]
+foo = "foo:main"
+
+[tool.uv]
+dev-dependencies = [
+    "pre-commit==4.3.0",
+    "pre-commit-update==0.8.0",
+    "pytest==8.4.1",
+    "pytest-cov==6.2.1",
+    "ruff==0.12.10",
+    "ty>=0.0.1a19",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/foo"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-vv -ra -q"
+log_cli = true
+log_cli_level = "INFO"
+log_format = "%(asctime)s %(levelname)s %(message)s"
+log_date_format = "%Y-%m-%d %H:%M:%S"
+minversion = "6.0"
+filterwarnings = "ignore"
+norecursedirs = "docs build"
+
+[tool.ruff]
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F"]
+ignore = ["F401"]
+
+[tool.ruff.lint.flake8-quotes]
+docstring-quotes = "double"
+
+[tool.ruff.format]
+exclude = ["*.ipynb"]
+
+[tool.pre-commit-update]
+dry_run = true
+all_versions = false
+verbose = true
+warnings = true
+preview = false
+jobs = 10
+keep = ["ruff"]
+bleeding_edge = ["pylint"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
