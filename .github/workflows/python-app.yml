@@ -37,3 +37,12 @@ jobs:
     - name: Test with pytest
       run: |
         pytest
+    - name: SonarCloud Scan
+      uses: SonarSource/sonarcloud-github-action@v2
+      with:
+          args: >
+            -Dsonar.projectKey=RoanKessels072_CodeSnapFE
+            -Dsonar.organization=roankessels072
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
