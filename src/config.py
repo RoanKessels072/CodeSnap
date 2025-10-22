@@ -4,9 +4,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Config:
-    """Base configuration class."""
+    DATABASE_URL = os.getenv(
+    'DATABASE_URL', 
+    'postgresql://postgres:password@localhost:5432/code_editor_db'
+)
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
-    
+    KEYCLOAK_URL = os.getenv('KEYCLOAK_URL', 'http://localhost:8080')
+
     CORS_ORIGINS = os.environ.get('CORS_ORIGINS', 'http://localhost:3000,http://localhost:5173').split(',')
     
     RATE_LIMIT_ENABLED = os.environ.get('RATE_LIMIT_ENABLED', 'true').lower() == 'true'
