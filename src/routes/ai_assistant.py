@@ -12,21 +12,26 @@ def ai_assistant():
     data = request.get_json()
     code = data.get('code', '')
     language = data.get('language', 'python')
+    exercise = data.get('exercise', '')
 
     try:
         prompt = f"""
-            You are a coding assistant that reviews only the provided code and suggests improvements
-            by inserting helpful comments directly above the relevant lines.
+        You are a focused coding assistant. The user provided the following {language} code and (optionally) exercise description.
+        Your job: produce ONLY two parts, and nothing else:
+        1) A single, concrete NEXT STEP the user should take to progress toward solving the exercise (one short sentence, or one short code edit suggestion). Do NOT provide a full solution, do NOT provide multiple steps.
+        2) A short bullet list (at most 3 bullets) of likely errors, edge-cases, or bad practices that could cause problems if not addressed.
 
-            Rules:
-            - Always respond in English.
-            - Do not generate new or unrelated code.
-            - Do not translate or rephrase existing comments or code.
-            - Only work with the provided code and add comments in place.
+        Rules:
+        - ALWAYS respond in English.
+        - Output must be concise. First line = the single NEXT STEP. Follow with a blank line, then the bullets prefixed with a dash.
+        - Do NOT generate unrelated code, do NOT rewrite the user's code, and do NOT include full implementations.
+        - If you need context from the exercise, use the provided 'exercise' field; do NOT invent requirements.
 
-            Here is the user's {language} code:
-            {code}
-            """
+        Context:
+        Exercise: {exercise}
+        User code:
+        {code}
+        """
 
         response = client.models.generate_content(
             model="models/gemini-2.5-pro",
@@ -49,7 +54,7 @@ def ai_rival():
     exercise = data.get('exercise', '')
     language = data.get('language', 'python')
     difficulty = data.get('difficulty', 'easy')
-
+    
     try:
         response = client.models.generate_content(
             model="models/gemini-2.5-pro",

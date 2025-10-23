@@ -44,7 +44,6 @@ def init_db():
     from models.attempt import UserExerciseAttempt
     
     Base.metadata.create_all(bind=engine)
-    print("✓ Database tables created successfully!")
 
 def get_db():
     """
