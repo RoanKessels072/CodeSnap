@@ -16,7 +16,7 @@ def seed_exercises():
                 name="Hello World",
                 description="Write a program that prints 'Hello, World!' to the console.",
                 difficulty=1,
-                starter_code="# Write your code here\nprint('Hello, World!')",
+                starter_code="# Write your code here    ",
                 language="python",
                 test_cases=[
                     {

@@ -12,23 +12,26 @@ def ai_assistant():
     data = request.get_json()
     code = data.get('code', '')
     language = data.get('language', 'python')
-    exercise = data.get('exercise', '')
+    exercise_name = data.get('exercise_name', '')
+    exercise_description = data.get('exercise_description', '')
+    reference_solution = data.get('reference_solution', '')
 
     try:
         prompt = f"""
-        You are a focused coding assistant. The user provided the following {language} code and (optionally) exercise description.
-        Your job: produce ONLY two parts, and nothing else:
-        1) A single, concrete NEXT STEP the user should take to progress toward solving the exercise (one short sentence, or one short code edit suggestion). Do NOT provide a full solution, do NOT provide multiple steps.
-        2) A short bullet list (at most 3 bullets) of likely errors, edge-cases, or bad practices that could cause problems if not addressed.
+        You are a coding assistant. The user is working on a coding exercise.
 
-        Rules:
-        - ALWAYS respond in English.
-        - Output must be concise. First line = the single NEXT STEP. Follow with a blank line, then the bullets prefixed with a dash.
-        - Do NOT generate unrelated code, do NOT rewrite the user's code, and do NOT include full implementations.
-        - If you need context from the exercise, use the provided 'exercise' field; do NOT invent requirements.
+        Instructions:
+        - Review the provided code and the exercise reference solution.
+        - Suggest **ONLY ONE NEXT STEP or hint** that helps the user progress toward the reference solution.
+        - Also provide **feedback on likely errors, edge-cases, or bad practices** (max 3 bullets).
+        - Output everything as **inline code comments** appropriate for {language}.
+        - Do NOT rewrite or delete user code. Do NOT provide full solutions.
+        - Be concise: next step on the first line, then a blank line, then the bullet list.
 
         Context:
-        Exercise: {exercise}
+        Exercise name: {exercise_name}
+        Exercise description: {exercise_description}
+        Reference solution: {reference_solution}
         User code:
         {code}
         """
@@ -51,16 +54,37 @@ def ai_assistant():
 @bp.route('/ai-rival', methods=['POST'])
 def ai_rival():
     data = request.get_json()
-    exercise = data.get('exercise', '')
+    exercise_name = data.get('exercise_name', '')
+    exercise_description = data.get('exercise_description', '')
     language = data.get('language', 'python')
-    difficulty = data.get('difficulty', 'easy')
+    difficulty = data.get('difficulty', 'easy')  # easy, medium, hard
     
     try:
+        prompt = f"""
+        You are an AI competitor in a coding exercise. Create a solution in {language}.
+
+        Instructions:
+        - Your goal is to provide a plausible solution to the exercise.
+        - Depending on the difficulty level, introduce mistakes, inefficiencies, or edge-case oversights:
+        - easy → more likely to have obvious mistakes
+        - medium → subtle mistakes or missing edge cases
+        - hard → mostly correct, small inefficiencies or minor mistakes
+        - Output the full code as {language} code.
+        - Do NOT reference or copy the user's code. Make it self-contained.
+
+        Context:
+        Exercise name: {exercise_name}
+        Exercise description: {exercise_description}
+        Difficulty: {difficulty}
+        """
         response = client.models.generate_content(
             model="models/gemini-2.5-pro",
-            contents=[f"Create an implementation of the following coding exercise in {language}: {exercise}"]
+            contents=[prompt]
         )
         ai_response = response.text
+        ai_response = re.sub(r'^```[a-zA-Z]*\n', '', ai_response)
+        ai_response = re.sub(r'\n```$', '', ai_response)
+
     except Exception as e:
         ai_response = f"Error calling Google AI: {str(e)}"
 
