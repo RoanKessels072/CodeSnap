@@ -6,12 +6,10 @@ bp = Blueprint('exercises', __name__)
 
 @bp.route('/', methods=['GET'])
 def get_exercises():
-    """Get all exercises"""
     db = get_db_session()
     try:
         exercises = db.query(Exercise).all()
         
-        # Convert to dict manually to avoid SQLAlchemy issues
         result = []
         for ex in exercises:
             result.append({
@@ -35,7 +33,6 @@ def get_exercises():
 
 @bp.route('/<int:exercise_id>', methods=['GET'])
 def get_exercise(exercise_id):
-    """Get a specific exercise by ID"""
     db = get_db_session()
     try:
         exercise = db.query(Exercise).filter(Exercise.id == exercise_id).first()
@@ -62,7 +59,6 @@ def get_exercise(exercise_id):
 
 @bp.route('/', methods=['POST'])
 def create_exercise():
-    """Create a new exercise"""
     db = get_db_session()
     try:
         data = request.get_json()
@@ -101,7 +97,6 @@ def create_exercise():
 
 @bp.route('/<int:exercise_id>', methods=['PUT'])
 def update_exercise(exercise_id):
-    """Update an existing exercise"""
     db = get_db_session()
     try:
         exercise = db.query(Exercise).filter(Exercise.id == exercise_id).first()
@@ -149,7 +144,6 @@ def update_exercise(exercise_id):
 
 @bp.route('/<int:exercise_id>', methods=['DELETE'])
 def delete_exercise(exercise_id):
-    """Delete an exercise"""
     db = get_db_session()
     try:
         exercise = db.query(Exercise).filter(Exercise.id == exercise_id).first()

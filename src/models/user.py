@@ -13,4 +13,4 @@ class User(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     last_login = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
-    attempts = relationship('UserExerciseAttempt', back_populates='user')
+    attempts = relationship('Attempt', back_populates='user')
