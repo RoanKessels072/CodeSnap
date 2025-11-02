@@ -19,6 +19,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
     - name: Set up Python 3.10
       uses: actions/setup-python@v3
       with:
@@ -41,7 +43,7 @@ jobs:
       uses: SonarSource/sonarcloud-github-action@v2
       with:
           args: >
-            -Dsonar.projectKey=RoanKessels072_CodeSnapFE
+            -Dsonar.projectKey=RoanKessels072_CodeSnap
             -Dsonar.organization=roankessels072
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
