@@ -132,6 +132,38 @@ except Exception as e:
         "tests_total": total
     }
 
+def run_pylint(code: str) -> tuple[float, str]:
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".py", mode='w')
+    tmp_name = tmp.name
+    
+    try:
+        tmp.write(code)
+        tmp.flush()
+        tmp.close()
+
+        result = subprocess.run(
+            [
+                "pylint",
+                "--score=y",
+                "--disable=C0114,C0116,C0304,C0103",
+                "--max-line-length=120",
+                tmp_name
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+    finally:
+        try:
+            os.unlink(tmp_name)
+        except PermissionError:
+            pass
+
+    match = re.search(r"rated at ([\d\.]+)/10", result.stdout)
+    score = float(match.group(1)) if match else 0.0
+    feedback = result.stdout
+    
+    return score, feedback
 
 def grade_javascript_attempt(code: str, function_name: str, test_cases_json: str) -> dict:
     test_cases = json.loads(test_cases_json)
@@ -211,41 +243,6 @@ try {{
         "tests_passed": passed,
         "tests_total": total
     }
-
-
-def run_pylint(code: str) -> tuple[float, str]:
-    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".py", mode='w')
-    tmp_name = tmp.name
-    
-    try:
-        tmp.write(code)
-        tmp.flush()
-        tmp.close()
-
-        result = subprocess.run(
-            [
-                "pylint",
-                "--score=y",
-                "--disable=C0114,C0116,C0304,C0103",
-                "--max-line-length=120",
-                tmp_name
-            ],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-    finally:
-        try:
-            os.unlink(tmp_name)
-        except PermissionError:
-            pass
-
-    match = re.search(r"rated at ([\d\.]+)/10", result.stdout)
-    score = float(match.group(1)) if match else 0.0
-    feedback = result.stdout
-    
-    return score, feedback
-
 
 def run_eslint(code: str) -> tuple[float, str]:
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".js", mode='w')

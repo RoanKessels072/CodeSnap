@@ -4,28 +4,24 @@ from database.db import get_db_session
 from services.attempt_service import create_attempt
 from services.user_service import get_or_create_user
 from middleware.keycloak_auth import require_auth
+from services.user_service import get_user_by_keycloak_id
+from models.attempt import Attempt
 
 bp = Blueprint("attempts", __name__)
 
 @bp.route("/", methods=["POST"])
 @require_auth
 def submit_attempt():
-    print("=== Received authenticated request ===")
     data = request.get_json()
     user_info = request.user_info
-    
-    print(f"User info: {user_info}")
-    print(f"Data: {data}")
-    
+
     if not data or "exerciseId" not in data or "code" not in data:
         return jsonify({"error": "Missing 'exerciseId' or 'code'"}), 400
 
     exercise_id = data["exerciseId"]
     code = data["code"]
-    
-    db: Session = get_db_session()
-    print("Got database session")
 
+    db: Session = get_db_session()
     try:
         user = get_or_create_user(
             db,
@@ -33,31 +29,29 @@ def submit_attempt():
             email=user_info['email'],
             username=user_info['username']
         )
-        print(f"User ID: {user.id}")
-        
-        print("Calling create_attempt...")
+
         attempt = create_attempt(db, user.id, exercise_id, code)
-        print(f"Attempt created: {attempt.id}")
-        
+
+        response_data = {
+            "attempt_id": attempt.id,
+            "stars": attempt.stars,
+            "score": attempt.score,
+            "user_id": user.id,
+            "exercise_id": attempt.exercise_id
+        }
+
     except ValueError as e:
-        print(f"ValueError: {e}")
-        db.close()
+        print(f"ValueError: {e}", flush=True)
         return jsonify({"error": str(e)}), 404
     except Exception as e:
-        print(f"Exception: {type(e).__name__}: {e}")
+        print(f"Exception: {type(e).__name__}: {e}", flush=True)
         import traceback
         traceback.print_exc()
-        db.close()
         return jsonify({"error": f"Internal error: {str(e)}"}), 500
     finally:
         db.close()
 
-    return jsonify({
-        "attempt_id": attempt.id,
-        "stars": attempt.stars,
-        "score": attempt.score,
-        "user_id": user.id
-    })
+    return jsonify(response_data)
 
 @bp.route("/user", methods=["GET"])
 @require_auth
@@ -67,8 +61,6 @@ def get_user_attempts():
     db: Session = get_db_session()
     
     try:
-        from services.user_service import get_user_by_keycloak_id
-        from models.attempt import Attempt
         
         user = get_user_by_keycloak_id(db, user_info['keycloak_id'])
         

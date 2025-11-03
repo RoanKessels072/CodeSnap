@@ -2,6 +2,8 @@ from flask import Blueprint, request, jsonify
 import re
 import os
 from google import genai
+from middleware.keycloak_auth import require_auth
+
 
 bp = Blueprint('ai_assistant', __name__)
 
