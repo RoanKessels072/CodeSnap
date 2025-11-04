@@ -60,8 +60,7 @@ def get_user_attempts():
     user_info = request.user_info
     db: Session = get_db_session()
     
-    try:
-        
+    try:    
         user = get_user_by_keycloak_id(db, user_info['keycloak_id'])
         
         if not user:

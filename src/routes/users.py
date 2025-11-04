@@ -1,29 +1,24 @@
 from flask import Blueprint, jsonify, request
 from database.db import get_db_session
-from models.user import User
 from middleware.keycloak_auth import require_auth
+from services.user_service import (
+    get_all_users,
+    get_user_by_keycloak_id,
+    get_user_by_id,
+    update_user_preference,
+    delete_user,
+    sync_user_from_keycloak
+)
 
 bp = Blueprint('users', __name__)
 
 @bp.route('/', methods=['GET'])
 @require_auth
-def get_users():
+def list_users():
     db = get_db_session()
     try:
-        users = db.query(User).all()
-        
-        result = []
-        for user in users:
-            result.append({
-                'id': user.id,
-                'keycloak_id': user.keycloak_id,
-                'username': user.username,
-                'preferred_language': user.preferred_language,
-                'created_at': user.created_at.isoformat() if user.created_at else None,
-                'last_login': user.last_login.isoformat() if user.last_login else None
-            })
-        
-        return jsonify(result)
+        users = get_all_users(db)
+        return jsonify(users)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     finally:
@@ -35,42 +30,22 @@ def get_users():
 def get_current_user():
     db = get_db_session()
     try:
-        user = db.query(User).filter(User.id == request.user.id).first()
-        
-        if not user:
-            return jsonify({'error': 'User not found'}), 404
-        
-        return jsonify({
-            'id': user.id,
-            'keycloak_id': user.keycloak_id,
-            'username': user.username,
-            'preferred_language': user.preferred_language,
-            'created_at': user.created_at.isoformat() if user.created_at else None,
-            'last_login': user.last_login.isoformat() if user.last_login else None
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-    finally:
-        db.close()
+        user_info = request.user_info
+        user = sync_user_from_keycloak(
+            db,
+            keycloak_id=user_info['keycloak_id'],
+            username=user_info.get('username'),
+            email=user_info.get('email')
+        )
 
-
-@bp.route('/<int:user_id>', methods=['GET'])
-@require_auth
-def get_user(user_id):
-    db = get_db_session()
-    try:
-        user = db.query(User).filter(User.id == user_id).first()
-        
-        if not user:
-            return jsonify({'error': 'User not found'}), 404
-        
         return jsonify({
-            'id': user.id,
-            'keycloak_id': user.keycloak_id,
-            'username': user.username,
-            'preferred_language': user.preferred_language,
-            'created_at': user.created_at.isoformat() if user.created_at else None,
-            'last_login': user.last_login.isoformat() if user.last_login else None
+            "id": user.id,
+            "keycloak_id": user.keycloak_id,
+            "username": user.username,
+            "email": user.email,
+            "preferred_language": user.preferred_language,
+            "created_at": user.created_at.isoformat() if user.created_at else None,
+            "last_login": user.last_login.isoformat() if user.last_login else None
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -83,50 +58,53 @@ def get_user(user_id):
 def update_current_user():
     db = get_db_session()
     try:
-        user = db.query(User).filter(User.id == request.user.id).first()
-        
+        user_info = request.user_info
+        data = request.get_json()
+
+        user = update_user_preference(db, keycloak_id=user_info['keycloak_id'], data=data)
         if not user:
             return jsonify({'error': 'User not found'}), 404
-        
-        data = request.get_json()
-        
-        if 'preferred_language' in data:
-            user.preferred_language = data['preferred_language']
-        
-        db.commit()
-        db.refresh(user)
-        
+
         return jsonify({
-            'id': user.id,
-            'keycloak_id': user.keycloak_id,
-            'username': user.username,
-            'preferred_language': user.preferred_language,
-            'created_at': user.created_at.isoformat() if user.created_at else None,
-            'last_login': user.last_login.isoformat() if user.last_login else None
+            "id": user.id,
+            "keycloak_id": user.keycloak_id,
+            "username": user.username,
+            "email": user.email,
+            "preferred_language": user.preferred_language,
+            "created_at": user.created_at.isoformat() if user.created_at else None,
+            "last_login": user.last_login.isoformat() if user.last_login else None
         })
     except Exception as e:
-        db.rollback()
         return jsonify({'error': str(e)}), 500
     finally:
         db.close()
 
 
-@bp.route('/<int:user_id>', methods=['DELETE'])
+@bp.route('/<int:user_id>', methods=['GET'])
 @require_auth
-def delete_user(user_id):
+def get_user_by_id_route(user_id):
     db = get_db_session()
     try:
-        user = db.query(User).filter(User.id == user_id).first()
-        
+        user = get_user_by_id(db, user_id)
         if not user:
             return jsonify({'error': 'User not found'}), 404
-        
-        db.delete(user)
-        db.commit()
-        
+        return jsonify(user)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@bp.route('/<keycloak_id>', methods=['DELETE'])
+@require_auth
+def delete_user_route(keycloak_id):
+    db = get_db_session()
+    try:
+        success = delete_user(db, keycloak_id)
+        if not success:
+            return jsonify({'error': 'User not found'}), 404
         return jsonify({'message': 'User deleted successfully'})
     except Exception as e:
-        db.rollback()
         return jsonify({'error': str(e)}), 500
     finally:
         db.close()
