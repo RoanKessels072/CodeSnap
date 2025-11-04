@@ -3,8 +3,8 @@ from flask import request, jsonify
 import jwt
 from jwt import PyJWKClient
 import os
-from src.database.db import get_db_session
-from src.models.user import User
+from database.db import get_db_session
+from models.user import User
 from datetime import datetime, timezone
 
 KEYCLOAK_URL = os.getenv('KEYCLOAK_URL', 'http://localhost:8080')

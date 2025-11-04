@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
-from src.database.db import get_db_session
-from src.middleware.keycloak_auth import require_auth
-from src.services.user_service import (
+from database.db import get_db_session
+from middleware.keycloak_auth import require_auth
+from services.user_service import (
     get_all_users,
     get_user_by_id,
     update_user_preference,

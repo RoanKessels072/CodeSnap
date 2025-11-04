@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
-from src.database.db import Base
+from database.db import Base
 
 class Attempt(Base):
     __tablename__ = 'user_exercise_attempts'

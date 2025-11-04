@@ -1,11 +1,11 @@
 from flask import Blueprint, request, jsonify
 from sqlalchemy.orm import Session
-from src.database.db import get_db_session
-from src.services.attempt_service import create_attempt
-from src.services.user_service import get_or_create_user
-from src.middleware.keycloak_auth import require_auth
-from src.services.user_service import get_user_by_keycloak_id
-from src.models.attempt import Attempt
+from database.db import get_db_session
+from services.attempt_service import create_attempt
+from services.user_service import get_or_create_user
+from middleware.keycloak_auth import require_auth
+from services.user_service import get_user_by_keycloak_id
+from models.attempt import Attempt
 
 bp = Blueprint("attempts", __name__)
 

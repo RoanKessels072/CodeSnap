@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
-from src.models.user import User
+from models.user import User
 
 
 def get_user_by_keycloak_id(db: Session, keycloak_id: str):

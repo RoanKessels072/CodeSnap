@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from src.models.exercise import Exercise
+from models.exercise import Exercise
 import json
 
 def get_all_exercises(db: Session):

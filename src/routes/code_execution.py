@@ -1,6 +1,6 @@
-from src.services.code_execution_service import execute_code
+from services.code_execution_service import execute_code
 from flask import Blueprint, request, jsonify
-from src.middleware.keycloak_auth import require_auth
+from middleware.keycloak_auth import require_auth
 
 bp = Blueprint("code", __name__)
 

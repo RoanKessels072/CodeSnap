@@ -1,6 +1,6 @@
-from src.database.db import get_db_session
-from src.models.user import User
-from src.models.exercise import Exercise
+from database.db import get_db_session
+from models.user import User
+from models.exercise import Exercise
 import json
 
 def seed_exercises():

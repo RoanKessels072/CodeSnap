@@ -1,7 +1,7 @@
 import subprocess
 from sqlalchemy.orm import Session
-from src.models.exercise import Exercise
-from src.models.attempt import Attempt
+from models.exercise import Exercise
+from models.attempt import Attempt
 from datetime import datetime, timezone
 import tempfile
 import os
