@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
 from database.db import get_db_session
 from models.exercise import Exercise
+from middleware.keycloak_auth import require_auth
 
 bp = Blueprint('exercises', __name__)
 
@@ -58,6 +59,7 @@ def get_exercise(exercise_id):
 
 
 @bp.route('/', methods=['POST'])
+@require_auth
 def create_exercise():
     db = get_db_session()
     try:
@@ -96,6 +98,7 @@ def create_exercise():
 
 
 @bp.route('/<int:exercise_id>', methods=['PUT'])
+@require_auth
 def update_exercise(exercise_id):
     db = get_db_session()
     try:
@@ -143,6 +146,7 @@ def update_exercise(exercise_id):
 
 
 @bp.route('/<int:exercise_id>', methods=['DELETE'])
+@require_auth
 def delete_exercise(exercise_id):
     db = get_db_session()
     try:

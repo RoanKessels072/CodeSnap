@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from middleware.keycloak_auth import require_auth
 import subprocess
 import tempfile
 import re
@@ -14,6 +15,7 @@ def sanitize_error(raw_error: str) -> str:
     return sanitized.strip()
 
 @bp.route('/execute', methods=['POST'])
+@require_auth
 def execute_code():
     data = request.get_json()
     code = data.get('code', '')

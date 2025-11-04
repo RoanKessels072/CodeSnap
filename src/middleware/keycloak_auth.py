@@ -1,15 +1,16 @@
 from functools import wraps
 from flask import request, jsonify
-import requests
 import jwt
 from jwt import PyJWKClient
 import os
+from database.db import get_db_session
+from models.user import User
+from datetime import datetime, timezone
 
 KEYCLOAK_URL = os.getenv('KEYCLOAK_URL', 'http://localhost:8080')
 KEYCLOAK_REALM = os.getenv('KEYCLOAK_REALM', 'codesnap')
 KEYCLOAK_CLIENT_ID = os.getenv('KEYCLOAK_CLIENT_ID', 'codesnap-client')
 
-# Cache for JWKS client
 _jwks_client = None
 
 def get_jwks_client():
@@ -20,7 +21,6 @@ def get_jwks_client():
     return _jwks_client
 
 def verify_token(token):
-    """Verify JWT token from Keycloak"""
     try:
         print("=== TOKEN VERIFICATION ===")
         print(f"Getting JWKS client...")
@@ -30,7 +30,6 @@ def verify_token(token):
         signing_key = jwks_client.get_signing_key_from_jwt(token)
         
         print(f"Decoding token...")
-        # Decode without audience verification first to see what's in the token
         decoded = jwt.decode(
             token,
             signing_key.key,
@@ -43,12 +42,10 @@ def verify_token(token):
         print(f"Username: {decoded.get('preferred_username')}")
         print(f"Audience: {decoded.get('aud')}")
         
-        # Verify audience manually - accept either client_id or 'account'
         token_audience = decoded.get('aud', [])
         if isinstance(token_audience, str):
             token_audience = [token_audience]
         
-        # Accept if audience contains our client_id or is 'account' (Keycloak default)
         valid_audiences = [KEYCLOAK_CLIENT_ID, 'account']
         print(f"Valid audiences: {valid_audiences}")
         print(f"Token audiences: {token_audience}")
@@ -71,18 +68,53 @@ def verify_token(token):
         traceback.print_exc()
         raise ValueError(f"Token verification failed: {str(e)}")
 
-def get_user_info_from_token(token):
-    """Extract user information from decoded token"""
+def sync_user_from_token(decoded_token):
+    db = get_db_session()
+    try:
+        keycloak_id = decoded_token.get('sub')
+        username = decoded_token.get('preferred_username')
+        
+        if not keycloak_id:
+            raise ValueError("Token missing 'sub' claim")
+        
+        user = db.query(User).filter(User.keycloak_id == keycloak_id).first()
+        
+        if not user:
+            print(f"Creating new user with keycloak_id: {keycloak_id}")
+            user = User(
+                keycloak_id=keycloak_id,
+                username=username,
+                last_login=datetime.now(timezone.utc)
+            )
+            db.add(user)
+        else:
+            print(f"Updating existing user: {user.id}")
+            user.last_login = datetime.now(timezone.utc)
+            if username and user.username != username:
+                user.username = username
+        
+        db.commit()
+        db.refresh(user)
+        return user
+    except Exception as e:
+        db.rollback()
+        print(f"Error syncing user: {str(e)}")
+        raise
+    finally:
+        db.close()
+
+def get_user_info_from_token(decoded_token, user):
     return {
-        'keycloak_id': token.get('sub'),
-        'email': token.get('email'),
-        'username': token.get('preferred_username'),
-        'name': token.get('name'),
-        'roles': token.get('realm_access', {}).get('roles', [])
+        'id': user.id,
+        'keycloak_id': decoded_token.get('sub'),
+        'email': decoded_token.get('email'),
+        'username': decoded_token.get('preferred_username'),
+        'name': decoded_token.get('name'),
+        'roles': decoded_token.get('realm_access', {}).get('roles', []),
+        'preferred_language': user.preferred_language
     }
 
 def require_auth(f):
-    """Decorator to require authentication"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         auth_header = request.headers.get('Authorization')
@@ -95,20 +127,20 @@ def require_auth(f):
             return jsonify({'error': 'No authorization header'}), 401
         
         try:
-            # Extract token from "Bearer <token>"
             token = auth_header.split(' ')[1] if ' ' in auth_header else auth_header
             print(f"Token extracted (first 20 chars): {token[:20]}...")
             
-            # Verify token
             decoded_token = verify_token(token)
             print(f"Token verified successfully for user: {decoded_token.get('preferred_username')}")
             
-            # Extract user info
-            user_info = get_user_info_from_token(decoded_token)
+            user = sync_user_from_token(decoded_token)
+            print(f"User synced: ID={user.id}, username={user.username}")
+            
+            user_info = get_user_info_from_token(decoded_token, user)
             print(f"User info: {user_info}")
             
-            # Add user info to request context
             request.user_info = user_info
+            request.user = user
             
             return f(*args, **kwargs)
         except ValueError as e:
@@ -123,7 +155,6 @@ def require_auth(f):
     return decorated_function
 
 def optional_auth(f):
-    """Decorator for optional authentication"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         auth_header = request.headers.get('Authorization')
@@ -132,12 +163,16 @@ def optional_auth(f):
             try:
                 token = auth_header.split(' ')[1] if ' ' in auth_header else auth_header
                 decoded_token = verify_token(token)
-                user_info = get_user_info_from_token(decoded_token)
+                user = sync_user_from_token(decoded_token)
+                user_info = get_user_info_from_token(decoded_token, user)
                 request.user_info = user_info
+                request.user = user
             except:
                 request.user_info = None
+                request.user = None
         else:
             request.user_info = None
+            request.user = None
         
         return f(*args, **kwargs)
     

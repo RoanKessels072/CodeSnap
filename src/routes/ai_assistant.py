@@ -10,6 +10,7 @@ bp = Blueprint('ai_assistant', __name__)
 client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 
 @bp.route('/ai-assistant', methods=['POST'])
+@require_auth
 def ai_assistant():
     data = request.get_json()
     code = data.get('code', '')
@@ -54,6 +55,7 @@ def ai_assistant():
     })
 
 @bp.route('/ai-rival', methods=['POST'])
+@require_auth
 def ai_rival():
     data = request.get_json()
     exercise_name = data.get('exercise_name', '')
