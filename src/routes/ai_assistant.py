@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
-from middleware.keycloak_auth import require_auth
-from services.ai_assistant_service import get_ai_assistant_feedback, generate_ai_rival
+from src.middleware.keycloak_auth import require_auth
+from src.services.ai_service import get_ai_assistant_feedback, generate_ai_rival
 
 bp = Blueprint('ai_assistant', __name__)
 

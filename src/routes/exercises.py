@@ -1,8 +1,8 @@
 from flask import Blueprint, jsonify, request
 from sqlalchemy.orm import Session
-from database.db import get_db
-from middleware.keycloak_auth import require_auth
-from services.exercise_service import (
+from src.database.db import get_db
+from src.middleware.keycloak_auth import require_auth
+from src.services.exercise_service import (
     get_all_exercises,
     get_exercise_by_id,
     create_exercise,

@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, Text, Integer, DateTime, JSON
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
-from database.db import Base
+from src.database.db import Base
 
 class Exercise(Base):
     __tablename__ = 'exercises'

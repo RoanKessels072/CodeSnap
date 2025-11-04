@@ -3,8 +3,8 @@ from flask import request, jsonify
 import jwt
 from jwt import PyJWKClient
 import os
-from database.db import get_db_session
-from models.user import User
+from src.database.db import get_db_session
+from src.models.user import User
 from datetime import datetime, timezone
 
 KEYCLOAK_URL = os.getenv('KEYCLOAK_URL', 'http://localhost:8080')
@@ -111,7 +111,6 @@ def get_user_info_from_token(decoded_token, user):
         'username': decoded_token.get('preferred_username'),
         'name': decoded_token.get('name'),
         'roles': decoded_token.get('realm_access', {}).get('roles', []),
-        'preferred_language': user.preferred_language
     }
 
 def require_auth(f):

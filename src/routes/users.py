@@ -1,9 +1,8 @@
 from flask import Blueprint, jsonify, request
-from database.db import get_db_session
-from middleware.keycloak_auth import require_auth
-from services.user_service import (
+from src.database.db import get_db_session
+from src.middleware.keycloak_auth import require_auth
+from src.services.user_service import (
     get_all_users,
-    get_user_by_keycloak_id,
     get_user_by_id,
     update_user_preference,
     delete_user,
@@ -43,7 +42,6 @@ def get_current_user():
             "keycloak_id": user.keycloak_id,
             "username": user.username,
             "email": user.email,
-            "preferred_language": user.preferred_language,
             "created_at": user.created_at.isoformat() if user.created_at else None,
             "last_login": user.last_login.isoformat() if user.last_login else None
         })
