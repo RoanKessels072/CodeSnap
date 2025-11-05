@@ -38,6 +38,11 @@ def test_db(test_engine):
     finally:
         db.close()
 
+@pytest.fixture(autouse=True)
+def patch_db_session(test_db):
+    with patch("routes.get_db_session", return_value=test_db):
+        yield
+
 @pytest.fixture
 def sample_user(test_db):
     user = User(
