@@ -95,8 +95,9 @@ class TestSeedData:
         mock_exercises.assert_called_once()
 
 class TestApp:
-    @patch('app.init_db')
-    @patch('database.db.create_engine')
+    @patch('database.db.engine', new=MagicMock())
+    @patch('database.db.create_engine', return_value=MagicMock())
+    @patch('app.init_db', return_value=None)
     def test_app_initialization(self, mock_engine, mock_init_db):
         mock_engine.return_value = MagicMock()
         

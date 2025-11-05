@@ -21,7 +21,7 @@ def patch_auth():
     with patch('middleware.keycloak_auth.require_auth', lambda f: f):
         yield
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def test_engine():
     engine = create_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
     Base.metadata.create_all(bind=engine)
