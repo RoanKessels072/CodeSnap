@@ -203,7 +203,6 @@ def seed_admin_user():
         
         admin = User(
             keycloak_id="admin-default-id",
-            email="admin@codesnap.com",
             username="admin"
         )
         

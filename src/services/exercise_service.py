@@ -19,7 +19,8 @@ def create_exercise(db: Session, data: dict):
             difficulty=data.get("difficulty", "easy"),
             function_name=data.get("function_name", ""),
             test_cases=json.dumps(data.get("test_cases", [])),
-            reference_solution=data.get("reference_solution", "")
+            reference_solution=data.get("reference_solution", ""),
+            starter_code=data.get("starter_code", "")
         )
         db.add(new_exercise)
         db.commit()

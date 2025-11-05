@@ -33,15 +33,13 @@ def get_current_user():
         user = sync_user_from_keycloak(
             db,
             keycloak_id=user_info['keycloak_id'],
-            username=user_info.get('username'),
-            email=user_info.get('email')
+            username=user_info.get('username')
         )
 
         return jsonify({
             "id": user.id,
             "keycloak_id": user.keycloak_id,
             "username": user.username,
-            "email": user.email,
             "created_at": user.created_at.isoformat() if user.created_at else None,
             "last_login": user.last_login.isoformat() if user.last_login else None
         })
@@ -67,8 +65,6 @@ def update_current_user():
             "id": user.id,
             "keycloak_id": user.keycloak_id,
             "username": user.username,
-            "email": user.email,
-            "preferred_language": user.preferred_language,
             "created_at": user.created_at.isoformat() if user.created_at else None,
             "last_login": user.last_login.isoformat() if user.last_login else None
         })

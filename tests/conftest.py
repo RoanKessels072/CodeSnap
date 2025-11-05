@@ -1,13 +1,25 @@
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from src.database.db import Base
-from src.models.user import User
-from src.models.exercise import Exercise
-from src.models.attempt import Attempt
+from database.db import Base
+from models.user import User
+from models.exercise import Exercise
+from models.attempt import Attempt
 import json
+from unittest.mock import patch
+
 
 TEST_DATABASE_URL = "sqlite:///:memory:"
+
+@pytest.fixture(autouse=True, scope='session')
+def patch_auth():
+    with patch('middleware.keycloak_auth.require_auth', lambda f: f):
+        yield
 
 @pytest.fixture(scope="function")
 def test_engine():
@@ -31,7 +43,6 @@ def sample_user(test_db):
     user = User(
         keycloak_id="test-keycloak-id",
         username="testuser",
-        email="test@example.com"
     )
     test_db.add(user)
     test_db.commit()
@@ -74,7 +85,6 @@ def mock_jwt_token():
     return {
         'sub': 'test-keycloak-id',
         'preferred_username': 'testuser',
-        'email': 'test@example.com',
         'name': 'Test User',
         'aud': ['codesnap-client'],
         'realm_access': {'roles': ['user']}
@@ -82,11 +92,10 @@ def mock_jwt_token():
 
 @pytest.fixture
 def app():
-    from src.app import app as flask_app
+    from app import app as flask_app
     flask_app.config['TESTING'] = True
     return flask_app
 
 @pytest.fixture
 def client(app):
-    """Create Flask test client."""
     return app.test_client()

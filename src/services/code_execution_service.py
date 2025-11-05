@@ -13,20 +13,49 @@ def execute_code(code: str, language: str):
     suffix = ".py" if language == "python" else ".js"
     runner = ["python"] if language == "python" else ["node"]
 
-    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-        tmp.write(code.encode('utf-8'))
-        tmp.flush()
+    # Create temp file with delete=False to handle Windows file locking
+    tmp = tempfile.NamedTemporaryFile(mode='w', suffix=suffix, delete=False, encoding='utf-8')
+    tmp_name = tmp.name
+    
+    try:
+        # Write and close file before subprocess uses it (Windows requirement)
+        tmp.write(code)
+        tmp.close()
+        
+        # Now run the subprocess
+        result = subprocess.run(
+            runner + [tmp_name],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=5
+        )
+        
+        return {
+            "output": result.stdout.decode('utf-8').strip() or "(no output)",
+            "error": sanitize_error(result.stderr.decode('utf-8').strip()) or None
+        }
+    except subprocess.TimeoutExpired:
+        return {
+            "output": "(no output)",
+            "error": "Execution timed out"
+        }
+    except Exception as e:
+        return {
+            "output": "(no output)",
+            "error": f"Execution error: {str(e)}"
+        }
+    finally:
+        # Clean up: remove temp file
         try:
-            result = subprocess.run(
-                runner + [tmp.name],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                timeout=5
-            )
-        finally:
-            os.unlink(tmp.name)
-
-    return {
-        "output": result.stdout.decode('utf-8').strip() or "(no output)",
-        "error": sanitize_error(result.stderr.decode('utf-8').strip()) or None
-    }
+            if os.path.exists(tmp_name):
+                os.unlink(tmp_name)
+        except PermissionError:
+            # On Windows, file might still be locked
+            # Try again after a short delay
+            import time
+            time.sleep(0.1)
+            try:
+                if os.path.exists(tmp_name):
+                    os.unlink(tmp_name)
+            except:
+                pass

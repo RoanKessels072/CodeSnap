@@ -1,6 +1,11 @@
-from src.models.user import User
-from src.models.exercise import Exercise
-from src.models.attempt import Attempt
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
+from models.user import User
+from models.exercise import Exercise
+from models.attempt import Attempt
 import json
 
 class TestUserModel:

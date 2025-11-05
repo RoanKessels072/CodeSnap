@@ -1,7 +1,11 @@
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 import pytest
 import json
 from unittest.mock import patch, MagicMock
-from src.services.attempt_service import (
+from services.attempt_service import (
     create_attempt,
     grade_submission,
     run_temp_file,
@@ -12,8 +16,8 @@ from src.services.attempt_service import (
     grade_javascript_attempt,
     run_eslint
 )
-from src.models.exercise import Exercise
-from src.models.attempt import Attempt
+from models.exercise import Exercise
+from models.attempt import Attempt
 
 class TestAttemptService:
     def test_create_attempt_exercise_not_found(self, test_db):

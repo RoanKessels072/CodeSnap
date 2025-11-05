@@ -26,7 +26,6 @@ def submit_attempt():
         user = get_or_create_user(
             db,
             keycloak_id=user_info['keycloak_id'],
-            email=user_info['email'],
             username=user_info['username']
         )
 

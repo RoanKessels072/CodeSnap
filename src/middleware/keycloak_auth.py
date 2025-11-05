@@ -107,7 +107,6 @@ def get_user_info_from_token(decoded_token, user):
     return {
         'id': user.id,
         'keycloak_id': decoded_token.get('sub'),
-        'email': decoded_token.get('email'),
         'username': decoded_token.get('preferred_username'),
         'name': decoded_token.get('name'),
         'roles': decoded_token.get('realm_access', {}).get('roles', []),

@@ -1,14 +1,20 @@
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
 from unittest.mock import patch, MagicMock
-from src.services.ai_service import get_ai_assistant_feedback, generate_ai_rival
+
+import services.ai_service as ai_service
 
 class TestAIAssistantService:
-    @patch('services.ai_assistant_service.client.models.generate_content')
+    @patch('services.ai_service.client.models.generate_content')
     def test_get_ai_assistant_feedback_success(self, mock_generate):
         mock_response = MagicMock()
         mock_response.text = "# Next step: Add return statement\n# - Check for edge cases"
         mock_generate.return_value = mock_response
         
-        result = get_ai_assistant_feedback(
+        result = ai_service.get_ai_assistant_feedback(
             code="def add(a, b): pass",
             language="python",
             exercise_name="Add Numbers",
@@ -19,47 +25,43 @@ class TestAIAssistantService:
         assert "Next step" in result
         mock_generate.assert_called_once()
 
-    @patch('services.ai_assistant_service.client.models.generate_content')
+    @patch('services.ai_service.client.models.generate_content')
     def test_get_ai_assistant_feedback_strips_code_blocks(self, mock_generate):
         mock_response = MagicMock()
         mock_response.text = "```python\n# Comment\n```"
         mock_generate.return_value = mock_response
         
-        result = get_ai_assistant_feedback(
-            code="code",
-            language="python",
-            exercise_name="Test",
-            description="Test",
+        result = ai_service.get_ai_assistant_feedback(
+            code="code", language="python",
+            exercise_name="Test", description="Test",
             reference_solution="solution"
         )
         
         assert "```" not in result
         assert "# Comment" in result
 
-    @patch('services.ai_assistant_service.client.models.generate_content')
+    @patch('services.ai_service.client.models.generate_content')
     def test_get_ai_assistant_feedback_with_language_tag(self, mock_generate):
         mock_response = MagicMock()
         mock_response.text = "```javascript\nconsole.log('test');\n```"
         mock_generate.return_value = mock_response
         
-        result = get_ai_assistant_feedback(
-            code="code",
-            language="javascript",
-            exercise_name="Test",
-            description="Test",
+        result = ai_service.get_ai_assistant_feedback(
+            code="code", language="javascript",
+            exercise_name="Test", description="Test",
             reference_solution="solution"
         )
         
         assert "```" not in result
         assert "console.log('test');" in result
 
-    @patch('services.ai_assistant_service.client.models.generate_content')
+    @patch('services.ai_service.client.models.generate_content')
     def test_generate_ai_rival_easy_difficulty(self, mock_generate):
         mock_response = MagicMock()
-        mock_response.text = "def add(a, b):\n    return a + b + 1  # Intentional mistake"
+        mock_response.text = "def add(a, b):\n    return a + b + 1"
         mock_generate.return_value = mock_response
         
-        result = generate_ai_rival(
+        result = ai_service.generate_ai_rival(
             language="python",
             exercise_name="Add Numbers",
             description="Add two numbers",
@@ -69,13 +71,13 @@ class TestAIAssistantService:
         assert "def add" in result
         mock_generate.assert_called_once()
 
-    @patch('services.ai_assistant_service.client.models.generate_content')
+    @patch('services.ai_service.client.models.generate_content')
     def test_generate_ai_rival_medium_difficulty(self, mock_generate):
         mock_response = MagicMock()
         mock_response.text = "function reverse(str) { return str.split('').reverse().join(''); }"
         mock_generate.return_value = mock_response
         
-        result = generate_ai_rival(
+        result = ai_service.generate_ai_rival(
             language="javascript",
             exercise_name="Reverse String",
             description="Reverse a string",
@@ -85,13 +87,13 @@ class TestAIAssistantService:
         assert "function reverse" in result
         mock_generate.assert_called_once()
 
-    @patch('services.ai_assistant_service.client.models.generate_content')
+    @patch('services.ai_service.client.models.generate_content')
     def test_generate_ai_rival_hard_difficulty(self, mock_generate):
         mock_response = MagicMock()
         mock_response.text = "```python\ndef fibonacci(n):\n    return n if n <= 1 else fibonacci(n-1) + fibonacci(n-2)\n```"
         mock_generate.return_value = mock_response
         
-        result = generate_ai_rival(
+        result = ai_service.generate_ai_rival(
             language="python",
             exercise_name="Fibonacci",
             description="Calculate fibonacci",
@@ -101,13 +103,13 @@ class TestAIAssistantService:
         assert "```" not in result
         assert "def fibonacci" in result
 
-    @patch('services.ai_assistant_service.client.models.generate_content')
+    @patch('services.ai_service.client.models.generate_content')
     def test_generate_ai_rival_strips_trailing_newlines(self, mock_generate):
         mock_response = MagicMock()
         mock_response.text = "code\n\n\n"
         mock_generate.return_value = mock_response
         
-        result = generate_ai_rival(
+        result = ai_service.generate_ai_rival(
             language="python",
             exercise_name="Test",
             description="Test",
@@ -116,13 +118,13 @@ class TestAIAssistantService:
         
         assert result == "code"
 
-    @patch('services.ai_assistant_service.client.models.generate_content')
+    @patch('services.ai_service.client.models.generate_content')
     def test_ai_assistant_includes_all_context(self, mock_generate):
         mock_response = MagicMock()
         mock_response.text = "feedback"
         mock_generate.return_value = mock_response
         
-        get_ai_assistant_feedback(
+        ai_service.get_ai_assistant_feedback(
             code="test_code",
             language="python",
             exercise_name="Test Exercise",
@@ -139,13 +141,13 @@ class TestAIAssistantService:
         assert "Test Description" in prompt
         assert "test_solution" in prompt
 
-    @patch('services.ai_assistant_service.client.models.generate_content')
+    @patch('services.ai_service.client.models.generate_content')
     def test_ai_rival_includes_difficulty_context(self, mock_generate):
         mock_response = MagicMock()
         mock_response.text = "code"
         mock_generate.return_value = mock_response
         
-        generate_ai_rival(
+        ai_service.generate_ai_rival(
             language="javascript",
             exercise_name="Test",
             description="Description",
