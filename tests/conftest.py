@@ -21,7 +21,7 @@ def patch_auth():
     with patch('middleware.keycloak_auth.require_auth', lambda f: f):
         yield
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def test_engine():
     engine = create_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
     Base.metadata.create_all(bind=engine)
@@ -31,8 +31,8 @@ def test_engine():
 
 @pytest.fixture(scope="function")
 def test_db(test_engine):
-    TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
-    db = TestSessionLocal()
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
+    db = SessionLocal()
     try:
         yield db
     finally:
@@ -42,6 +42,7 @@ def test_db(test_engine):
 def patch_db_session(test_db):
     with patch("database.db.get_db_session", return_value=test_db):
         yield
+
 
 @pytest.fixture
 def sample_user(test_db):
