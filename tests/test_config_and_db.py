@@ -50,10 +50,14 @@ class TestConfig:
 
 class TestDatabase:
     def test_init_db(self):
-        with patch('database.db.Base.metadata.create_all') as mock_create:
-            from database.db import init_db, engine
-            init_db()
-            mock_create.assert_called_once_with(bind=engine)
+        with patch('database.db.get_engine') as mock_get_engine:
+            mock_engine = MagicMock()
+            mock_get_engine.return_value = mock_engine
+            with patch('database.db.Base.metadata.create_all') as mock_create_all:
+                from database.db import init_db
+                init_db()
+                mock_create_all.assert_called_once_with(bind=mock_engine)
+
 
     def test_get_db_session(self):
         from database.db import get_db_session
@@ -95,19 +99,16 @@ class TestSeedData:
         mock_exercises.assert_called_once()
 
 class TestApp:
-    @patch('database.db.engine', new=MagicMock())
-    @patch('database.db.create_engine', return_value=MagicMock())
+    @patch('database.db.get_engine', return_value=MagicMock())
     @patch('app.init_db', return_value=None)
-    def test_app_initialization(self, mock_engine, mock_init_db):
-        mock_engine.return_value = MagicMock()
-        
+    def test_app_initialization(self, mock_get_engine, mock_init_db):
         import importlib
         import app as app_module
         importlib.reload(app_module)
-        
+
         assert app_module.app is not None
 
-    @patch('database.db.engine', new=MagicMock())
+    @patch('database.db.get_engine', new=MagicMock())
     @patch('database.db.create_engine', return_value=MagicMock())
     def test_app_blueprints_registered(self, mock_engine):
         mock_engine.return_value = MagicMock()

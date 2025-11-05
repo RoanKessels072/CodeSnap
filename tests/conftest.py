@@ -6,7 +6,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from database.db import Base
 from models.user import User
 from models.exercise import Exercise
 from models.attempt import Attempt
@@ -28,6 +27,7 @@ def patch_auth():
 @pytest.fixture(scope="function")
 def test_engine():
     engine = create_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
+    from database.db import Base
     Base.metadata.create_all(bind=engine)
     yield engine
     Base.metadata.drop_all(bind=engine)
@@ -43,10 +43,9 @@ def test_db(test_engine):
         db.close()
 
 @pytest.fixture(autouse=True)
-def patch_db_session(test_db):
-    with patch("database.db.get_db_session", return_value=test_db):
-        yield
-
+def patch_db_session(test_engine, test_db):
+    with patch("database.db.get_engine", return_value=test_engine):
+        yield test_db
 
 @pytest.fixture
 def sample_user(test_db):

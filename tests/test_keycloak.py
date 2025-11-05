@@ -98,17 +98,20 @@ class TestKeycloakAuth:
             with pytest.raises(ValueError, match="Token has expired"):
                 verify_token("expired.jwt.token")
 
-    def test_sync_user_from_token_new_user(self):
-        decoded_token = {
-            'sub': 'new-keycloak-id',
-            'preferred_username': 'newuser'
-        }
-        user = sync_user_from_token(decoded_token)
-        assert user is not None
-        assert user.keycloak_id == 'new-keycloak-id'
-        assert user.username == 'newuser'
+    class TestKeycloakAuth:
+        def test_sync_user_from_token_new_user(self, patch_db_session):
+            decoded_token = {
+                'sub': 'new-keycloak-id',
+                'preferred_username': 'newuser'
+            }
+            user = sync_user_from_token(decoded_token)
+            assert user is not None
+            assert user.keycloak_id == 'new-keycloak-id'
+            assert user.username == 'newuser'
 
-    def test_sync_user_from_token_missing_sub(self, test_db):
+
+
+    def test_sync_user_from_token_missing_sub(self):
         decoded_token = {'preferred_username': 'user'}
         
         with pytest.raises(ValueError, match="Token missing 'sub' claim"):
