@@ -12,6 +12,7 @@ from models.exercise import Exercise
 from models.attempt import Attempt
 import json
 from unittest.mock import patch
+import os
 
 
 TEST_DATABASE_URL = "sqlite:///:memory:"
@@ -37,6 +38,16 @@ def test_db(test_engine):
         yield db
     finally:
         db.close()
+
+@pytest.fixture(autouse=True, scope='session')
+def patch_db_url():
+    old_url = os.environ.get('DATABASE_URL')
+    os.environ['DATABASE_URL'] = 'sqlite:///:memory:'
+    yield
+    if old_url:
+        os.environ['DATABASE_URL'] = old_url
+    else:
+        os.environ.pop('DATABASE_URL', None)
 
 @pytest.fixture(autouse=True)
 def patch_db_session(test_db):
