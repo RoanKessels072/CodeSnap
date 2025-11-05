@@ -107,7 +107,8 @@ class TestApp:
         
         assert app_module.app is not None
 
-    @patch('database.db.create_engine')
+    @patch('database.db.engine', new=MagicMock())
+    @patch('database.db.create_engine', return_value=MagicMock())
     def test_app_blueprints_registered(self, mock_engine):
         mock_engine.return_value = MagicMock()
         
