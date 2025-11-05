@@ -21,6 +21,11 @@ def patch_auth():
     with patch('middleware.keycloak_auth.require_auth', lambda f: f):
         yield
 
+@pytest.fixture(autouse=True)
+def mock_genai_client():
+    with patch("services.ai_service.genai.Client") as mock_client:
+        yield mock_client
+
 @pytest.fixture(scope="function")
 def test_engine():
     engine = create_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
